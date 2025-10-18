@@ -1,7 +1,7 @@
 
 
 [mysql_server]
-<mysql_ip> ansible_user=ubuntu 
+ec2-54-87-233-150.compute-1.amazonaws.com ansible_user=ubuntu ansible_ssh_private_key_file=/path/to/hariom.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [maven_server]
-<maven_ip> ansible_user=ubuntu 
+<your-app-dns> ansible_user=ubuntu ansible_ssh_private_key_file=/path/to/hariom.pem ansible_ssh_common_args='-o StrictHostKeyChecking=no'
