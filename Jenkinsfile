@@ -34,13 +34,25 @@ pipeline {
         stage('Generate Dynamic Ansible Inventory') {
             steps {
                 script {
-                    sh """
-                        echo "[mysql_server]" > inventory
-                        echo "\$(cd terraform && terraform output -raw mysql_server_ip) ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory
+                    def mysqlIp = sh(
+                        script: "cd terraform && terraform output -raw mysql_server_ip",
+                        returnStdout: true
+                    ).trim()
 
-                        echo "[maven_server]" >> inventory
-                        echo "\$(cd terraform && terraform output -raw maven_server_ip) ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory
-                    """
+                    def mavenIp = sh(
+                        script: "cd terraform && terraform output -raw maven_server_ip",
+                        returnStdout: true
+                    ).trim()
+
+                    writeFile file: 'inventory', text: """
+[mysql_server]
+${mysqlIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+
+[maven_server]
+${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+"""
+                    // Optional: print inventory for debugging
+                    sh "cat inventory"
                 }
             }
         }
@@ -54,7 +66,10 @@ pipeline {
         stage('Update MySQL IP in application.properties') {
             steps {
                 script {
-                    def mysqlIp = sh(script: "cd terraform && terraform output -raw mysql_server_ip", returnStdout: true).trim()
+                    def mysqlIp = sh(
+                        script: "cd terraform && terraform output -raw mysql_server_ip",
+                        returnStdout: true
+                    ).trim()
 
                     sh """
                         sed -i 's|jdbc:mysql://youip/petclinic|jdbc:mysql://${mysqlIp}/petclinic|' spring-petclinic-jenkins/src/main/resources/application.properties
@@ -74,7 +89,10 @@ pipeline {
         stage('Copy WAR to Maven/App Server') {
             steps {
                 script {
-                    def appIp = sh(script: "cd terraform && terraform output -raw maven_server_ip", returnStdout: true).trim()
+                    def appIp = sh(
+                        script: "cd terraform && terraform output -raw maven_server_ip",
+                        returnStdout: true
+                    ).trim()
 
                     sh """
                         scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.war ubuntu@${appIp}:/home/ubuntu/app.war
