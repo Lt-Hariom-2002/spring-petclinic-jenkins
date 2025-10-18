@@ -61,7 +61,7 @@ ${mavenDns} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_P
 
         stage('Run Ansible Setup') {
             steps {
-                sh "ansible-playbook -i inventory setup.yml"
+                sh "ansible-playbook -i inventory setup_roles.yml"
             }
         }
 
