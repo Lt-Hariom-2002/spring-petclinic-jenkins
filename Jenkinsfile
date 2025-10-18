@@ -10,7 +10,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY = credentials('AWS_KEY')
         AWS_SECRET_KEY = credentials('AWS_SECRET')
-        SSH_PRIVATE_KEY_PATH = "${WORKSPACE}/hariom.pem"  // SSH key will be copied to workspace
+        SSH_PRIVATE_KEY_PATH = "${WORKSPACE}/hariom.pem"
     }
 
     stages {
@@ -24,20 +24,13 @@ pipeline {
         stage('Prepare SSH Key') {
             steps {
                 sh """
-                    # Copy your SSH private key into workspace
                     cp /var/lib/jenkins/.ssh/hariom.pem ${WORKSPACE}/hariom.pem
-                    chmod 400 ${WORKSPACE}/hariom.pem
+                    chmod 600 ${WORKSPACE}/hariom.pem
                 """
             }
         }
 
-        stage('Check Repo Structure') {
-            steps {
-                sh 'ls -R'
-            }
-        }
-
-        stage('Provision Infrastructure with Terraform') {
+        stage('Provision Infrastructure') {
             steps {
                 sh """
                     terraform init
@@ -51,42 +44,31 @@ pipeline {
         stage('Generate Dynamic Ansible Inventory') {
             steps {
                 script {
-                    def mysqlDns = sh(
-                        script: "terraform output -raw mysql_server_dns",
-                        returnStdout: true
-                    ).trim()
-
-                    def mavenDns = sh(
-                        script: "terraform output -raw maven_server_dns",
-                        returnStdout: true
-                    ).trim()
+                    def mysqlDns = sh(script: "terraform output -raw mysql_server_dns", returnStdout: true).trim()
+                    def mavenDns = sh(script: "terraform output -raw maven_server_dns", returnStdout: true).trim()
 
                     writeFile file: 'inventory', text: """
 [mysql_server]
-${mysqlDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mysqlDns} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [maven_server]
-${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mavenDns} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 """
                     sh "cat inventory"
                 }
             }
         }
 
-        stage('Run Ansible Setup (Install Packages)') {
+        stage('Run Ansible Setup') {
             steps {
                 sh "ansible-playbook -i inventory setup.yml"
             }
         }
 
-        stage('Update MySQL IP in application.properties') {
+        stage('Update MySQL IP') {
             steps {
                 script {
-                    def mysqlIp = sh(
-                        script: "terraform output -raw mysql_server_ip",
-                        returnStdout: true
-                    ).trim()
-
+                    def mysqlIp = sh(script: "terraform output -raw mysql_server_ip", returnStdout: true).trim()
                     sh """
                         sed -i 's|jdbc:mysql://youip/petclinic|jdbc:mysql://${mysqlIp}/petclinic|' spring-petclinic-jenkins/src/main/resources/application.properties
                     """
@@ -94,7 +76,7 @@ ${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY
             }
         }
 
-        stage('Build WAR using Maven') {
+        stage('Build WAR') {
             steps {
                 dir('spring-petclinic-jenkins') {
                     sh "mvn clean package -DskipTests"
@@ -105,20 +87,16 @@ ${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY
         stage('Copy WAR to Maven/App Server') {
             steps {
                 script {
-                    def appDns = sh(
-                        script: "terraform output -raw maven_server_dns",
-                        returnStdout: true
-                    ).trim()
-
+                    def appDns = sh(script: "terraform output -raw maven_server_dns", returnStdout: true).trim()
                     sh """
                         scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no \
-                        spring-petclinic-jenkins/target/*.war ec2-user@${appDns}:/home/ec2-user/app.war
+                        spring-petclinic-jenkins/target/*.war ubuntu@${appDns}:/home/ubuntu/app.war
                     """
                 }
             }
         }
 
-        stage('Deploy Application on Maven/App Server') {
+        stage('Deploy Application') {
             steps {
                 sh "ansible-playbook -i inventory deploy.yml"
             }
@@ -127,10 +105,10 @@ ${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY
 
     post {
         success {
-            echo "✅ Application deployed successfully on Maven (App) Server!"
+            echo "✅ Application deployed successfully!"
         }
         failure {
-            echo "❌ Something failed. Please check the logs."
+            echo "❌ Deployment failed. Check logs!"
         }
     }
 }
