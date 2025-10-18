@@ -10,7 +10,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY = credentials('AWS_KEY')
         AWS_SECRET_KEY = credentials('AWS_SECRET')
-        SSH_PRIVATE_KEY_PATH = "~/.ssh/hariom.pem"
+        SSH_PRIVATE_KEY_PATH = "hariom.pem"
     }
 
     stages {
@@ -41,21 +41,21 @@ pipeline {
             steps {
                 script {
                     def mysqlIp = sh(
-                        script: "terraform output -raw mysql_server_ip",
+                        script: "terraform output -raw mysql_server_dns",
                         returnStdout: true
                     ).trim()
 
                     def mavenIp = sh(
-                        script: "terraform output -raw maven_server_ip",
+                        script: "terraform output -raw maven_server_dns",
                         returnStdout: true
                     ).trim()
 
                     writeFile file: 'inventory', text: """
 [mysql_server]
-${mysqlIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mysqlIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [maven_server]
-${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mavenIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 """
                     sh "cat inventory"
                 }
@@ -94,13 +94,13 @@ ${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PA
         stage('Copy WAR to Maven/App Server') {
             steps {
                 script {
-                    def appIp = sh(
-                        script: "terraform output -raw maven_server_ip",
+                    def appDns = sh(
+                        script: "terraform output -raw maven_server_dns",
                         returnStdout: true
                     ).trim()
 
                     sh """
-                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.war ubuntu@${appIp}:/home/ubuntu/app.war
+                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.war ec2-user@${appDns}:/home/ec2-user/app.war
                     """
                 }
             }
