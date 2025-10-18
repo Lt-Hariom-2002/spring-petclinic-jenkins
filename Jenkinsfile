@@ -26,7 +26,7 @@ pipeline {
                 sh """
                     # Copy your SSH private key into workspace
                     cp /var/lib/jenkins/.ssh/hariom.pem ${WORKSPACE}/hariom.pem
-                    chmod 600 ${WORKSPACE}/hariom.pem
+                    chmod 400 ${WORKSPACE}/hariom.pem
                 """
             }
         }
