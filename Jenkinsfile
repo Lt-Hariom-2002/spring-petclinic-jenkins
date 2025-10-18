@@ -10,7 +10,7 @@ pipeline {
     environment {
         AWS_ACCESS_KEY = credentials('AWS_KEY')
         AWS_SECRET_KEY = credentials('AWS_SECRET')
-        SSH_PRIVATE_KEY_PATH = "hariom.pem"
+        SSH_PRIVATE_KEY_PATH = "hariom.pem"  // should exist in Jenkins workspace
     }
 
     stages {
@@ -29,33 +29,35 @@ pipeline {
 
         stage('Provision Infrastructure with Terraform') {
             steps {
-                sh '''
+                sh """
                     pwd && ls -la
                     terraform init
-                    terraform apply -auto-approve
-                '''
+                    terraform apply -auto-approve \
+                        -var AWS_ACCESS_KEY=${AWS_ACCESS_KEY} \
+                        -var AWS_SECRET_KEY=${AWS_SECRET_KEY}
+                """
             }
         }
 
         stage('Generate Dynamic Ansible Inventory') {
             steps {
                 script {
-                    def mysqlIp = sh(
+                    def mysqlDns = sh(
                         script: "terraform output -raw mysql_server_dns",
                         returnStdout: true
                     ).trim()
 
-                    def mavenIp = sh(
+                    def mavenDns = sh(
                         script: "terraform output -raw maven_server_dns",
                         returnStdout: true
                     ).trim()
 
                     writeFile file: 'inventory', text: """
 [mysql_server]
-${mysqlIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mysqlDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 
 [maven_server]
-${mavenIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 """
                     sh "cat inventory"
                 }
@@ -100,7 +102,8 @@ ${mavenIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_
                     ).trim()
 
                     sh """
-                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.war ec2-user@${appDns}:/home/ec2-user/app.war
+                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no \
+                        spring-petclinic-jenkins/target/*.war ec2-user@${appDns}:/home/ec2-user/app.war
                     """
                 }
             }
@@ -122,4 +125,5 @@ ${mavenIp} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_
         }
     }
 }
+
 
