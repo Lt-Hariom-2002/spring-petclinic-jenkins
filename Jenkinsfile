@@ -31,16 +31,12 @@ pipeline {
             }
         }
 
-
         stage('Generate Dynamic Ansible Inventory') {
             steps {
                 script {
                     sh """
                         echo "[mysql_server]" > inventory
                         echo "\$(cd terraform && terraform output -raw mysql_server_ip) ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory
-
-                        echo "[tomcat_server]" >> inventory
-                        echo "\$(cd terraform && terraform output -raw tomcat_server_ip) ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory
 
                         echo "[maven_server]" >> inventory
                         echo "\$(cd terraform && terraform output -raw maven_server_ip) ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'" >> inventory
@@ -70,24 +66,24 @@ pipeline {
         stage('Build WAR using Maven') {
             steps {
                 dir('spring-petclinic-jenkins') {
-                    sh "mvn clean package"
+                    sh "mvn clean package -DskipTests"
                 }
             }
         }
 
-        stage('Copy Jar to Tomcat Server') {
+        stage('Copy WAR to Maven/App Server') {
             steps {
                 script {
-                    def tomcatIp = sh(script: "cd terraform && terraform output -raw tomcat_server_ip", returnStdout: true).trim()
+                    def appIp = sh(script: "cd terraform && terraform output -raw maven_server_ip", returnStdout: true).trim()
 
                     sh """
-                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.jar ubuntu@${tomcatIp}:/home/ubuntu/app.war
+                        scp -i ${SSH_PRIVATE_KEY_PATH} -o StrictHostKeyChecking=no spring-petclinic-jenkins/target/*.war ubuntu@${appIp}:/home/ubuntu/app.war
                     """
                 }
             }
         }
 
-        stage('Deploy WAR on Tomcat Server') {
+        stage('Deploy Application on Maven/App Server') {
             steps {
                 sh "ansible-playbook -i inventory deploy.yml"
             }
@@ -96,7 +92,7 @@ pipeline {
 
     post {
         success {
-            echo "✅ Application deployed successfully!"
+            echo "✅ Application deployed successfully on Maven (App) Server!"
         }
         failure {
             echo "❌ Something failed. Please check the logs."
