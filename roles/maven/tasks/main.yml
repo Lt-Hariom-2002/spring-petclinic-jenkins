@@ -12,7 +12,7 @@
 
 - name: Clone project
   git:
-    repo: 'https://github.com/NEMCO-Projects/spring-petclinic-jenkins.git'
+    repo: 'https://github.com/Lt-Hariom-2002/spring-petclinic-jenkins.git'
     dest: /home/ubuntu/app
 
 - name: Build Jar file
