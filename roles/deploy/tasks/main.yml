@@ -1,19 +1,17 @@
 ---
-- name: Deploy WAR file to Tomcat
-  hosts: tomcat_server
+- name: Deploy Spring PetClinic Application
+  hosts: maven_server
   become: yes
   tasks:
-    - name: Stop Tomcat if running
-      shell: /opt/tomcat/bin/shutdown.sh || true
+    - name: Stop existing app if running
+      shell: |
+        pkill -f "app.war" || true
 
-    - name: Copy WAR file to Tomcat webapps
-      copy:
-        src: /home/ubuntu/app.war
-        dest: /opt/tomcat/webapps/petclinic.war
-        remote_src: yes
-        owner: tomcat
-        group: tomcat
-        mode: '0644'
+    - name: Ensure app.war is executable
+      file:
+        path: /home/ubuntu/app.war
+        mode: '0755'
 
-    - name: Start Tomcat
-      shell: /opt/tomcat/bin/startup.sh
+    - name: Start Spring PetClinic app in background
+      shell: |
+        nohup java -jar /home/ubuntu/app.war > /home/ubuntu/app.log 2>&1 &
