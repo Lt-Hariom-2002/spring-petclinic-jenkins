@@ -21,6 +21,12 @@ pipeline {
             }
         }
 
+        stage('Check Repo Structure') {
+            steps {
+                sh 'ls -R'
+            }
+        }
+
         stage('Provision Infrastructure with Terraform') {
             steps {
                 sh '''
@@ -35,12 +41,12 @@ pipeline {
             steps {
                 script {
                     def mysqlIp = sh(
-                        script: "cd terraform && terraform output -raw mysql_server_ip",
+                        script: "terraform output -raw mysql_server_ip",
                         returnStdout: true
                     ).trim()
 
                     def mavenIp = sh(
-                        script: "cd terraform && terraform output -raw maven_server_ip",
+                        script: "terraform output -raw maven_server_ip",
                         returnStdout: true
                     ).trim()
 
@@ -51,7 +57,6 @@ ${mysqlIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PA
 [maven_server]
 ${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PATH} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
 """
-                    // Optional: print inventory for debugging
                     sh "cat inventory"
                 }
             }
@@ -67,7 +72,7 @@ ${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PA
             steps {
                 script {
                     def mysqlIp = sh(
-                        script: "cd terraform && terraform output -raw mysql_server_ip",
+                        script: "terraform output -raw mysql_server_ip",
                         returnStdout: true
                     ).trim()
 
@@ -90,7 +95,7 @@ ${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PA
             steps {
                 script {
                     def appIp = sh(
-                        script: "cd terraform && terraform output -raw maven_server_ip",
+                        script: "terraform output -raw maven_server_ip",
                         returnStdout: true
                     ).trim()
 
@@ -117,3 +122,4 @@ ${mavenIp} ansible_user=ubuntu ansible_ssh_private_key_file=${SSH_PRIVATE_KEY_PA
         }
     }
 }
+
