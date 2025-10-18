@@ -2,22 +2,22 @@ pipeline {
     agent any
     
     tools {
-        terraform 'terra'
-        ansible 'ansible'
-        maven 'maven'
+        terraform 'ttff'
+        ansible 'aann'
+        maven 'mmvvnn'
     }
 
     environment {
         AWS_ACCESS_KEY = credentials('AWS_KEY')
         AWS_SECRET_KEY = credentials('AWS_SECRET')
-        SSH_PRIVATE_KEY_PATH = "~/.ssh/mujahed.pem"
+        SSH_PRIVATE_KEY_PATH = "~/.ssh/hariom.pem"
     }
 
     stages {
 
         stage('Clone App Repo') {
             steps {
-                git branch: 'main', url: 'https://github.com/NEMCO-Projects/spring-petclinic-jenkins.git'
+                git branch: 'main', url: 'https://github.com/Lt-Hariom-2002/spring-petclinic-jenkins.git'
             }
         }
 
