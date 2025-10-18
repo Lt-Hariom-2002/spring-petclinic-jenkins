@@ -11,8 +11,3 @@
   roles:
     - maven
 
-- name: Setup Tomcat Server
-  hosts: tomcat_server
-  become: yes
-  roles:
-    - tomcat
