@@ -1,5 +1,4 @@
-[tomcat_server]
-<tomcat_ip> ansible_user=ubuntu 
+
 
 [mysql_server]
 <mysql_ip> ansible_user=ubuntu 
