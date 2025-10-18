@@ -4,7 +4,7 @@
   become: yes
   tasks:
     - name: Update apt cache
-      apt: 
+      apt:
         update_cache: yes
 
     - name: Install MySQL server
@@ -12,20 +12,19 @@
         name: mysql-server
         state: present
 
-    - name: Allow remote connections by changing bind-address
+    - name: Allow remote connections (bind to all interfaces)
       lineinfile:
         path: /etc/mysql/mysql.conf.d/mysqld.cnf
         regexp: '^bind-address'
         line: 'bind-address = 0.0.0.0'
-        state: present
         backup: yes
 
-    - name: Restart MySQL to apply bind-address change
+    - name: Restart MySQL service
       service:
         name: mysql
         state: restarted
 
-    - name: Install PyMySQL for Ansible DB modules
+    - name: Install PyMySQL for Ansible
       apt:
         name: python3-pymysql
         state: present
@@ -36,7 +35,7 @@
         state: present
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
-    - name: Create database user for all hosts
+    - name: Create petclinic user with privileges
       mysql_user:
         name: petclinic
         password: "me@tuka_ram1973"
@@ -46,21 +45,13 @@
         login_unix_socket: /var/run/mysqld/mysqld.sock
 
 
-    - name: Create database user
-      mysql_user:
-        name: petclinic
-        password: "me@tuka_ram1973"
-        priv: "petclinic.*:ALL"
-        state: present
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-
-
-- name: Setup Maven/Build Server
+- name: Setup Maven/App Server
   hosts: maven_server
   become: yes
   tasks:
     - name: Update apt cache
-      apt: update_cache: yes
+      apt:
+        update_cache: yes
 
     - name: Install Java 17 and Maven
       apt:
@@ -69,4 +60,10 @@
           - maven
         state: present
 
+    - name: Install unzip and other utilities
+      apt:
+        name:
+          - unzip
+          - curl
+        state: present
 
