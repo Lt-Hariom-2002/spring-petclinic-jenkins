@@ -5,37 +5,34 @@ provider "aws" {
 }
 
 # ---------------------------
-# 1️⃣ MySQL Server
+# MySQL Server
 # ---------------------------
 resource "aws_instance" "mysql" {
-  ami                    = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
-  instance_type          = "t3.micro"              # Free Tier eligible
-  key_name               = "hariom"                # Your EC2 key pair name
-  vpc_security_group_ids = [aws_security_group.mysql_sg.id]
+  ami                         = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
+  instance_type               = "t3.micro"
+  key_name                    = "hariom"
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.mysql_sg.id]
 
-  tags = {
-    Name = "mysql-server"
-  }
+  tags = { Name = "mysql-server" }
 }
 
 # ---------------------------
-# 2️⃣ Maven/App Server
+# Maven/App Server
 # ---------------------------
 resource "aws_instance" "maven" {
-  ami                    = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
-  instance_type          = "t3.micro"              # Free Tier eligible
-  key_name               = "hariom"
-  vpc_security_group_ids = [aws_security_group.maven_sg.id]
+  ami                         = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
+  instance_type               = "t3.micro"
+  key_name                    = "hariom"
+  associate_public_ip_address = true
+  vpc_security_group_ids      = [aws_security_group.maven_sg.id]
 
-  tags = {
-    Name = "maven-server"
-  }
+  tags = { Name = "maven-server" }
 }
 
 # ---------------------------
-# 3️⃣ Security Groups
+# Security Groups
 # ---------------------------
-
 resource "aws_security_group" "mysql_sg" {
   name        = "mysql-sg"
   description = "Allow MySQL and SSH"
@@ -93,9 +90,8 @@ resource "aws_security_group" "maven_sg" {
 }
 
 # ---------------------------
-# 4️⃣ Outputs
+# Outputs
 # ---------------------------
-
 output "mysql_server_ip" {
   value = aws_instance.mysql.public_ip
 }
