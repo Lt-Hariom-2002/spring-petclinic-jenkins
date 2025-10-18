@@ -121,4 +121,16 @@ ${mavenDns} ansible_user=ec2-user ansible_ssh_private_key_file=${SSH_PRIVATE_KEY
         stage('Deploy Application on Maven/App Server') {
             steps {
                 sh "ansible-playbook -i inventory deploy.yml"
+            }
+        }
+    }
 
+    post {
+        success {
+            echo "✅ Application deployed successfully on Maven (App) Server!"
+        }
+        failure {
+            echo "❌ Something failed. Please check the logs."
+        }
+    }
+}
