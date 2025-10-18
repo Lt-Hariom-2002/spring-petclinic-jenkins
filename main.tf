@@ -8,8 +8,8 @@ provider "aws" {
 # 1️⃣ MySQL Server
 # ---------------------------
 resource "aws_instance" "mysql" {
-  ami                    = "ami-0c02fb55956c7d316"  # Amazon Linux 2 (us-east-1)
-  instance_type          = "t2.micro"
+  ami                    = "ami-0341d95f75f311023"  # Amazon Linux 2 (us-east-1)
+  instance_type          = "t3.micro"
   key_name               = "hariom"                 # Your EC2 key pair name in AWS
   vpc_security_group_ids = [aws_security_group.mysql_sg.id]
   tags = {
@@ -21,8 +21,8 @@ resource "aws_instance" "mysql" {
 # 2️⃣ Maven/App Server
 # ---------------------------
 resource "aws_instance" "maven" {
-  ami                    = "ami-0c02fb55956c7d316"
-  instance_type          = "t2.micro"
+  ami                    = "ami-0341d95f75f311023"
+  instance_type          = "t3.micro"
   key_name               = "hariom"
   vpc_security_group_ids = [aws_security_group.maven_sg.id]
   tags = {
