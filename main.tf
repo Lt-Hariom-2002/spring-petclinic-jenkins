@@ -20,13 +20,7 @@ resource "aws_instance" "maven_server" {
 
 
 
-output "mysql_server_dns" {
-  value = aws_instance.mysql.public_dns
-}
 
-output "maven_server_dns" {
-  value = aws_instance.maven.public_dns
-}
 
 output "mysql_server_ip" {
   value = aws_instance.mysql.public_ip
