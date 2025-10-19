@@ -8,7 +8,7 @@ provider "aws" {
 # MySQL Server
 # ---------------------------
 resource "aws_instance" "mysql" {
-  ami                         = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
+  ami                         = "ami-0360c520857e3138f"  # Ubuntu 22.04 LTS
   instance_type               = "t3.micro"
   key_name                    = "hariom"
   associate_public_ip_address = true
@@ -21,7 +21,7 @@ resource "aws_instance" "mysql" {
 # Maven/App Server
 # ---------------------------
 resource "aws_instance" "maven" {
-  ami                         = "ami-0c2b8ca1dad447f8a"  # Ubuntu 22.04 LTS
+  ami                         = "ami-0360c520857e3138f"  # Ubuntu 22.04 LTS
   instance_type               = "t3.micro"
   key_name                    = "hariom"
   associate_public_ip_address = true
