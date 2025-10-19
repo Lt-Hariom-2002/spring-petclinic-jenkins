@@ -21,15 +21,6 @@ pipeline {
             }
         }
 
-        stage('Prepare SSH Key') {
-            steps {
-                sh """
-                    cp /var/lib/jenkins/.ssh/hariom.pem ${WORKSPACE}/hariom.pem
-                    chmod 400 ${WORKSPACE}/hariom.pem
-                """
-            }
-        }
-
         stage('Provision Infrastructure') {
             steps {
                 sh """
